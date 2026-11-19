@@ -1,0 +1,20 @@
+@baseUrl = https://localhost:7119
+
+### 1. Submit a government form (POST)
+POST {{baseUrl}}/api/forms/submissions
+Content-Type: application/json
+
+{
+  "formType": "CertificateOfIndigency",
+  "applicantFullName": "Juan Dela Cruz",
+  "email": "juan.delacruz@example.com",
+  "contactNumber": "09171234567",
+  "fields": {
+    "purpose": "Scholarship Application",
+    "address": "Barangay San Lorenzo, Makati"
+  }
+}
+
+### 2. Look up a submission by reference code (GET)
+### Replace GOV-... with the referenceCode returned from the POST response
+GET {{baseUrl}}/api/forms/submissions/GOV-20261119-ABCDEF
