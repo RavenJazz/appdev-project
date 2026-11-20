@@ -12,10 +12,10 @@ Currently, the website has no front-end(UI), therefore the database handling is 
     2. Administrative
 
 For the Client Side, the website could do these four functionalities: 
-    - accept a submission of a request
-    - track a request
-    - update a request
-    - delete a request
+ - accept a submission of a request
+- track a request
+- update a request
+- delete a request
 
 While for the Adminnistrative Side:
     there are still no functionalities here as it is currently in progress.
