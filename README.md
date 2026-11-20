@@ -39,7 +39,7 @@ While for the Administrative Side:
 1. Open **Terminal**, **PowerShell**, or **Command Prompt** in the project root folder.
 2. Navigate into the web project directory:
    ```bash
-   cd GovernmentWebsite
+   cd [the location of the GovernmentWebsite folder]
    ```
 3. Run the application:
    ```bash
