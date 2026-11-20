@@ -21,4 +21,4 @@ While for the Adminnistrative Side:
 - there is still no functionalities here as it is currently in progress.
 
   **Known Issue:**
-  - Submitted data is not being saved in the database on the client side.
+  - Submitted data is not being saved in the database on the client side
