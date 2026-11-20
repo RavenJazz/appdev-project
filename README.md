@@ -22,4 +22,46 @@ While for the Administrative Side:
 - There is still no functionalities here as it is currently in progress.
 
 **Known Issue:**
-  - Submitted data is not being saved in the database on the client side
+  - Submitted data is not being saved in the database on the client side.
+
+---
+
+## How to Run
+
+### Prerequisites
+* [.NET SDK 10.0](https://dotnet.microsoft.com/download) (or .NET SDK 9.0.200+)
+* Any modern web browser (Edge, Chrome, Firefox, etc.)
+
+---
+
+### Option 1: Running via Terminal / Command Prompt (Recommended)
+
+1. Open **Terminal**, **PowerShell**, or **Command Prompt** in the project root folder.
+2. Navigate into the web project directory:
+   ```bash
+   cd GovernmentWebsite
+   ```
+3. Run the application:
+   ```bash
+   dotnet run
+   ```
+4. Once the terminal displays `Now listening on: http://localhost:5137`, open your browser and visit:
+   * **Citizen Portal (Client):** [http://localhost:5137](http://localhost:5137)
+   * **Staff & Admin Dashboard:** [http://localhost:5137/Admin](http://localhost:5137/Admin)
+
+> 💡 *To stop the application at any time, press `Ctrl + C` in the terminal.*
+
+---
+
+### Option 2: Running via Visual Studio 2022
+
+1. Open **`GovernmentWebsite.sln`** (or `GovernmentWebsite.slnx`) in Visual Studio.
+2. Select the **`http`** or **`https`** profile from the run dropdown at the top toolbar.
+3. Press **`Ctrl + F5`** (Start Without Debugging) or **`F5`** (Start With Debugging).
+4. Visual Studio will build the project and automatically open your default browser.
+
+---
+
+### 💾 Database Setup
+* The project uses **SQLite** (`GovernmentWebsite.db`), which runs locally without requiring an external database server (no SQL Server setup needed).
+* All tables and migrations are pre-configured and ready to use.
