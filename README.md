@@ -18,7 +18,7 @@ For the Client Side, the website could do these four functionalities:
 - update a request
 - delete a request
 
-While for the Adminnistrative Side:
+While for the Administrative Side:
 - there is still no functionalities here as it is currently in progress.
 
 **Known Issue:**
