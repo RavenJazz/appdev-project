@@ -1,8 +1,380 @@
-﻿@{
-    ViewData["Title"] = "Home Page";
+@{
+    ViewData["Title"] = "Citizen Portal - Form Submissions";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="container py-4">
+    <div class="text-center mb-5">
+        <h1 class="display-5 fw-bold text-primary">🏛️ Citizen Services Portal</h1>
+        <p class="lead text-muted">Submit official government forms, track status, update details, or withdraw applications.</p>
+    </div>
+
+    <div class="row g-4">
+        <!-- Form Submission Card (CREATE) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-primary text-white py-3">
+                    <h5 class="card-title mb-0">📝 Submit New Application (Create)</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form id="submissionForm">
+                        <div class="mb-3">
+                            <label for="formType" class="form-label fw-semibold">Form Type</label>
+                            <select id="formType" class="form-select" required>
+                                <option value="CertificateOfIndigency">Certificate of Indigency</option>
+                                <option value="BarangayClearance">Barangay Clearance</option>
+                                <option value="BusinessPermit">Business Permit Application</option>
+                                <option value="CommunityTaxCertificate">Community Tax Certificate (Cedula)</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="applicantFullName" class="form-label fw-semibold">Applicant Full Name</label>
+                            <input type="text" class="form-control" id="applicantFullName" placeholder="e.g. Juan Dela Cruz" required />
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">Email Address</label>
+                                <input type="email" class="form-control" id="email" placeholder="name@example.com" required />
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contactNumber" class="form-label fw-semibold">Contact Number</label>
+                                <input type="tel" class="form-control" id="contactNumber" placeholder="09171234567" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="purpose" class="form-label fw-semibold">Purpose of Request</label>
+                            <input type="text" class="form-control" id="purpose" placeholder="e.g. Scholarship Application / Employment" required />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="address" class="form-label fw-semibold">Residential Address</label>
+                            <input type="text" class="form-control" id="address" placeholder="e.g. 123 Rizal St, Makati" required />
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100 py-2 fw-semibold" id="submitBtn">
+                            Submit Form to Database
+                        </button>
+                    </form>
+
+                    <!-- Submission Result Alert -->
+                    <div id="submitResult" class="mt-4 d-none"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Track & Manage Submission Card (READ, UPDATE, DELETE) -->
+        <div class="col-lg-6">
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-dark text-white py-3">
+                    <h5 class="card-title mb-0">🔍 Track & Manage Application (Read, Update, Delete)</h5>
+                </div>
+                <div class="card-body p-4">
+                    <p class="text-muted small">Enter your reference code to view, edit, or cancel your submission.</p>
+                    <div class="input-group mb-3">
+                        <input type="text" id="trackRefCode" class="form-control" placeholder="e.g. GOV-20261120-ABC123" />
+                        <button class="btn btn-dark" type="button" id="trackBtn">Look Up</button>
+                    </div>
+
+                    <!-- Track Result -->
+                    <div id="trackResult" class="d-none"></div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Citizen Edit Application Modal (UPDATE) -->
+<div class="modal fade" id="citizenEditModal" tabindex="-1" aria-labelledby="citizenEditModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning">
+                <h5 class="modal-title fw-bold" id="citizenEditModalLabel">✏️ Edit Application Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editForm">
+                    <input type="hidden" id="editRefCode" />
+                    
+                    <div class="mb-3">
+                        <label class="form-label text-muted small fw-bold">REFERENCE CODE</label>
+                        <input type="text" id="editDisplayRef" class="form-control-plaintext fw-bold font-monospace" readonly />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editFullName" class="form-label fw-semibold">Applicant Full Name</label>
+                        <input type="text" class="form-control" id="editFullName" required />
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="editEmail" class="form-label fw-semibold">Email Address</label>
+                            <input type="email" class="form-control" id="editEmail" required />
+                        </div>
+                        <div class="col-md-6">
+                            <label for="editContact" class="form-label fw-semibold">Contact Number</label>
+                            <input type="tel" class="form-control" id="editContact" />
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editPurpose" class="form-label fw-semibold">Purpose of Request</label>
+                        <input type="text" class="form-control" id="editPurpose" required />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="editAddress" class="form-label fw-semibold">Residential Address</label>
+                        <input type="text" class="form-control" id="editAddress" required />
+                    </div>
+
+                    <div id="editAlert" class="alert d-none"></div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning fw-semibold" id="saveEditBtn">Update Application</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let currentLoadedSubmission = null;
+    const citizenEditModal = new bootstrap.Modal(document.getElementById('citizenEditModal'));
+
+    // 1. CREATE: Submit Form
+    document.getElementById('submissionForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        const submitBtn = document.getElementById('submitBtn');
+        const submitResult = document.getElementById('submitResult');
+
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Saving to database...";
+        submitResult.className = "mt-4 d-none";
+
+        const payload = {
+            formType: document.getElementById('formType').value,
+            applicantFullName: document.getElementById('applicantFullName').value,
+            email: document.getElementById('email').value,
+            contactNumber: document.getElementById('contactNumber').value,
+            fields: {
+                purpose: document.getElementById('purpose').value,
+                address: document.getElementById('address').value
+            }
+        };
+
+        try {
+            const response = await fetch('/api/forms/submissions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                submitResult.className = "alert alert-success mt-4";
+                submitResult.innerHTML = `
+                    <h6 class="alert-heading fw-bold">✅ Submitted Successfully!</h6>
+                    <p class="mb-1"><strong>Reference Code:</strong> <span class="badge bg-success fs-6">${escapeHtml(data.referenceCode)}</span></p>
+                    <p class="mb-1"><strong>Status:</strong> ${escapeHtml(data.status)}</p>
+                    <p class="mb-1"><strong>Applicant:</strong> ${escapeHtml(data.applicantFullName)}</p>
+                    <p class="mb-0 text-muted small">Submitted at: ${new Date(data.submittedAt).toLocaleString()}</p>
+                `;
+                document.getElementById('trackRefCode').value = data.referenceCode;
+                document.getElementById('submissionForm').reset();
+            } else {
+                submitResult.className = "alert alert-danger mt-4";
+                submitResult.innerText = data.title || "Failed to submit form.";
+            }
+        } catch (err) {
+            submitResult.className = "alert alert-danger mt-4";
+            submitResult.innerText = "Error connecting to backend: " + err.message;
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Submit Form to Database";
+        }
+    });
+
+    // 2. READ: Track Form
+    document.getElementById('trackBtn').addEventListener('click', lookupSubmission);
+
+    async function lookupSubmission() {
+        const refCode = document.getElementById('trackRefCode').value.trim();
+        const trackResult = document.getElementById('trackResult');
+
+        if (!refCode) {
+            alert("Please enter a reference code.");
+            return;
+        }
+
+        trackResult.className = "alert alert-info";
+        trackResult.innerText = "Querying database...";
+
+        try {
+            const response = await fetch('/api/forms/submissions/' + encodeURIComponent(refCode));
+            if (response.ok) {
+                currentLoadedSubmission = await response.json();
+                renderTrackResult(currentLoadedSubmission);
+            } else if (response.status === 404) {
+                currentLoadedSubmission = null;
+                trackResult.className = "alert alert-warning";
+                trackResult.innerText = "No submission found for reference code: " + refCode;
+            } else {
+                currentLoadedSubmission = null;
+                trackResult.className = "alert alert-danger";
+                trackResult.innerText = "Error looking up submission.";
+            }
+        } catch (err) {
+            currentLoadedSubmission = null;
+            trackResult.className = "alert alert-danger";
+            trackResult.innerText = "Network error: " + err.message;
+        }
+    }
+
+    function renderTrackResult(data) {
+        const trackResult = document.getElementById('trackResult');
+        const badgeClass = getBadgeClass(data.status);
+
+        const purpose = (data.fields && data.fields.purpose) ? data.fields.purpose : 'N/A';
+        const address = (data.fields && data.fields.address) ? data.fields.address : 'N/A';
+        const updatedInfo = data.updatedAt ? `<div class="small text-muted">Last updated: ${new Date(data.updatedAt).toLocaleString()}</div>` : '';
+        const notesDisplay = data.reviewNotes ? `
+            <div class="alert alert-warning py-2 px-3 small mt-2 mb-0">
+                <strong>🏛️ Official Staff Notes:</strong> ${escapeHtml(data.reviewNotes)}
+            </div>` : '';
+
+        trackResult.className = "card border bg-white p-3 shadow-sm";
+        trackResult.innerHTML = `
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="badge bg-secondary font-monospace">${escapeHtml(data.referenceCode)}</span>
+                <span class="badge ${badgeClass}">${escapeHtml(data.status)}</span>
+            </div>
+            <h5 class="fw-bold mb-1">${escapeHtml(data.formType)}</h5>
+            <div class="small text-muted mb-2">Submitted on ${new Date(data.submittedAt).toLocaleString()}</div>
+            ${updatedInfo}
+            <hr class="my-2" />
+            <div class="small mb-1"><strong>Applicant:</strong> ${escapeHtml(data.applicantFullName)}</div>
+            <div class="small mb-1"><strong>Email:</strong> ${escapeHtml(data.email)}</div>
+            <div class="small mb-1"><strong>Contact:</strong> ${escapeHtml(data.contactNumber || 'N/A')}</div>
+            <div class="small mb-1"><strong>Purpose:</strong> ${escapeHtml(purpose)}</div>
+            <div class="small mb-2"><strong>Address:</strong> ${escapeHtml(address)}</div>
+            ${notesDisplay}
+            <hr class="my-3" />
+            <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-warning text-dark flex-grow-1 fw-semibold" onclick="openCitizenEditModal()">
+                    ✏️ Edit Details (Update)
+                </button>
+                <button class="btn btn-sm btn-outline-danger flex-grow-1 fw-semibold" onclick="citizenDeleteSubmission()">
+                    🗑️ Cancel / Delete
+                </button>
+            </div>
+        `;
+    }
+
+    // 3. UPDATE: Open Edit Modal
+    window.openCitizenEditModal = function() {
+        if (!currentLoadedSubmission) return;
+
+        document.getElementById('editRefCode').value = currentLoadedSubmission.referenceCode;
+        document.getElementById('editDisplayRef').value = currentLoadedSubmission.referenceCode;
+        document.getElementById('editFullName').value = currentLoadedSubmission.applicantFullName;
+        document.getElementById('editEmail').value = currentLoadedSubmission.email;
+        document.getElementById('editContact').value = currentLoadedSubmission.contactNumber || '';
+        document.getElementById('editPurpose').value = (currentLoadedSubmission.fields && currentLoadedSubmission.fields.purpose) || '';
+        document.getElementById('editAddress').value = (currentLoadedSubmission.fields && currentLoadedSubmission.fields.address) || '';
+        document.getElementById('editAlert').className = 'alert d-none';
+
+        citizenEditModal.show();
+    };
+
+    // Save Edit
+    document.getElementById('saveEditBtn').addEventListener('click', async function() {
+        const refCode = document.getElementById('editRefCode').value;
+        const alertBox = document.getElementById('editAlert');
+        const saveBtn = document.getElementById('saveEditBtn');
+
+        const payload = {
+            applicantFullName: document.getElementById('editFullName').value,
+            email: document.getElementById('editEmail').value,
+            contactNumber: document.getElementById('editContact').value,
+            fields: {
+                purpose: document.getElementById('editPurpose').value,
+                address: document.getElementById('editAddress').value
+            }
+        };
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Updating...';
+
+        try {
+            const res = await fetch(`/api/forms/submissions/${encodeURIComponent(refCode)}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (res.ok) {
+                currentLoadedSubmission = await res.json();
+                citizenEditModal.hide();
+                renderTrackResult(currentLoadedSubmission);
+            } else {
+                alertBox.className = 'alert alert-danger';
+                alertBox.innerText = 'Failed to update submission.';
+            }
+        } catch (err) {
+            alertBox.className = 'alert alert-danger';
+            alertBox.innerText = 'Network error: ' + err.message;
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Update Application';
+        }
+    });
+
+    // 4. DELETE: Citizen Delete / Cancel Submission
+    window.citizenDeleteSubmission = async function() {
+        if (!currentLoadedSubmission) return;
+        const refCode = currentLoadedSubmission.referenceCode;
+
+        if (!confirm(`Are you sure you want to cancel and delete your application (${refCode})? This action cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/forms/submissions/${encodeURIComponent(refCode)}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                currentLoadedSubmission = null;
+                const trackResult = document.getElementById('trackResult');
+                trackResult.className = 'alert alert-success';
+                trackResult.innerHTML = `<strong>🗑️ Application ${escapeHtml(refCode)} has been successfully deleted from the database.</strong>`;
+                document.getElementById('trackRefCode').value = '';
+            } else {
+                alert('Failed to delete application.');
+            }
+        } catch (err) {
+            alert('Error deleting application: ' + err.message);
+        }
+    };
+
+    function getBadgeClass(status) {
+        switch (status) {
+            case 'Approved': return 'bg-success';
+            case 'Rejected': return 'bg-danger';
+            case 'Under Review': return 'bg-info text-dark';
+            case 'Requires Additional Documents': return 'bg-warning text-dark';
+            case 'Cancelled': return 'bg-secondary';
+            default: return 'bg-primary';
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    }
+</script>
+}

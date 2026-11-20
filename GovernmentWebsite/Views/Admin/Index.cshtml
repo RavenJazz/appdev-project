@@ -1,0 +1,275 @@
+@{
+    ViewData["Title"] = "Staff & Admin Dashboard";
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold text-dark mb-0">🛡️ Staff & Admin Dashboard</h2>
+            <p class="text-muted small mb-0">Review, approve, reject, update, and manage citizen submissions.</p>
+        </div>
+        <button class="btn btn-outline-primary" id="refreshBtn">
+            🔄 Refresh List
+        </button>
+    </div>
+
+    <!-- Filter / Search bar -->
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body p-3">
+            <div class="row g-2 align-items-center">
+                <div class="col-md-5">
+                    <input type="text" id="searchInput" class="form-control" placeholder="Search by name, reference code, or form type..." />
+                </div>
+                <div class="col-md-4">
+                    <select id="statusFilter" class="form-select">
+                        <option value="">All Statuses</option>
+                        <option value="Submitted - Pending Review">Submitted - Pending Review</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Requires Additional Documents">Requires Additional Documents</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="col-md-3 text-end text-muted small">
+                    Showing <span id="recordCount" class="fw-bold">0</span> records
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Submissions Table Card -->
+    <div class="card shadow-sm border-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Reference Code</th>
+                        <th>Form Type</th>
+                        <th>Applicant</th>
+                        <th>Contact / Email</th>
+                        <th>Status</th>
+                        <th>Submitted At</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="submissionsTableBody">
+                    <tr>
+                        <td colspan="7" class="text-center py-4 text-muted">
+                            <div class="spinner-border spinner-border-sm me-2" role="status"></div> Loading submissions...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Admin Review / Status Update Modal -->
+<div class="modal fade" id="reviewModal" tabindex="-1" aria-labelledby="reviewModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="reviewModalLabel">📋 Update Submission Status</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalRefCode" />
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Reference Code</label>
+                    <input type="text" id="modalDisplayRef" class="form-control-plaintext fw-bold" readonly />
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Applicant</label>
+                    <input type="text" id="modalDisplayApplicant" class="form-control-plaintext" readonly />
+                </div>
+                <div class="mb-3">
+                    <label for="modalStatus" class="form-label fw-semibold">Update Status</label>
+                    <select id="modalStatus" class="form-select" required>
+                        <option value="Submitted - Pending Review">Submitted - Pending Review</option>
+                        <option value="Under Review">Under Review</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Requires Additional Documents">Requires Additional Documents</option>
+                        <option value="Cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="modalNotes" class="form-label fw-semibold">Reviewer Remarks / Notes</label>
+                    <textarea id="modalNotes" class="form-control" rows="3" placeholder="Provide feedback, instructions, or approval notes..."></textarea>
+                </div>
+                <div id="modalAlert" class="alert d-none"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" id="saveStatusBtn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+<script>
+    let allSubmissions = [];
+    const reviewModal = new bootstrap.Modal(document.getElementById('reviewModal'));
+
+    async function loadSubmissions() {
+        const tbody = document.getElementById('submissionsTableBody');
+        tbody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-muted"><div class="spinner-border spinner-border-sm me-2"></div> Loading submissions...</td></tr>`;
+
+        try {
+            const res = await fetch('/api/forms/submissions');
+            if (res.ok) {
+                allSubmissions = await res.json();
+                renderTable();
+            } else {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Failed to load submissions.</td></tr>`;
+            }
+        } catch (err) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-danger py-4">Error: ${err.message}</td></tr>`;
+        }
+    }
+
+    function renderTable() {
+        const tbody = document.getElementById('submissionsTableBody');
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        const statusFilter = document.getElementById('statusFilter').value;
+
+        const filtered = allSubmissions.filter(item => {
+            const matchesQuery = !query ||
+                item.referenceCode.toLowerCase().includes(query) ||
+                item.applicantFullName.toLowerCase().includes(query) ||
+                item.formType.toLowerCase().includes(query);
+
+            const matchesStatus = !statusFilter || item.status === statusFilter;
+            return matchesQuery && matchesStatus;
+        });
+
+        document.getElementById('recordCount').innerText = filtered.length;
+
+        if (filtered.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">No submissions match the filter criteria.</td></tr>`;
+            return;
+        }
+
+        tbody.innerHTML = filtered.map(item => {
+            const badgeClass = getBadgeClass(item.status);
+            const notesDisplay = item.reviewNotes ? `<div class="small text-muted mt-1"><em>Note: ${escapeHtml(item.reviewNotes)}</em></div>` : '';
+
+            return `
+                <tr>
+                    <td><span class="badge bg-secondary font-monospace">${escapeHtml(item.referenceCode)}</span></td>
+                    <td><strong>${escapeHtml(item.formType)}</strong></td>
+                    <td>${escapeHtml(item.applicantFullName)}</td>
+                    <td>
+                        <div class="small">${escapeHtml(item.email)}</div>
+                        <div class="small text-muted">${escapeHtml(item.contactNumber || 'N/A')}</div>
+                    </td>
+                    <td>
+                        <span class="badge ${badgeClass}">${escapeHtml(item.status)}</span>
+                        ${notesDisplay}
+                    </td>
+                    <td class="small text-muted">${new Date(item.submittedAt).toLocaleDateString()} ${new Date(item.submittedAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</td>
+                    <td class="text-end">
+                        <button class="btn btn-sm btn-outline-primary me-1" onclick="openReviewModal('${escapeHtml(item.referenceCode)}')">
+                            ✏️ Review
+                        </button>
+                        <button class="btn btn-sm btn-outline-danger" onclick="deleteSubmission('${escapeHtml(item.referenceCode)}')">
+                            🗑️ Delete
+                        </button>
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    }
+
+    function getBadgeClass(status) {
+        switch (status) {
+            case 'Approved': return 'bg-success';
+            case 'Rejected': return 'bg-danger';
+            case 'Under Review': return 'bg-info text-dark';
+            case 'Requires Additional Documents': return 'bg-warning text-dark';
+            case 'Cancelled': return 'bg-secondary';
+            default: return 'bg-primary';
+        }
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[m]);
+    }
+
+    window.openReviewModal = function(refCode) {
+        const item = allSubmissions.find(s => s.referenceCode === refCode);
+        if (!item) return;
+
+        document.getElementById('modalRefCode').value = item.referenceCode;
+        document.getElementById('modalDisplayRef').value = item.referenceCode;
+        document.getElementById('modalDisplayApplicant').value = `${item.applicantFullName} (${item.formType})`;
+        document.getElementById('modalStatus').value = item.status;
+        document.getElementById('modalNotes').value = item.reviewNotes || '';
+        document.getElementById('modalAlert').className = 'alert d-none';
+
+        reviewModal.show();
+    };
+
+    document.getElementById('saveStatusBtn').addEventListener('click', async function() {
+        const refCode = document.getElementById('modalRefCode').value;
+        const status = document.getElementById('modalStatus').value;
+        const reviewNotes = document.getElementById('modalNotes').value;
+        const alertBox = document.getElementById('modalAlert');
+        const saveBtn = document.getElementById('saveStatusBtn');
+
+        saveBtn.disabled = true;
+        saveBtn.innerText = 'Saving...';
+
+        try {
+            const res = await fetch(`/api/forms/submissions/${encodeURIComponent(refCode)}/status`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status, reviewNotes })
+            });
+
+            if (res.ok) {
+                reviewModal.hide();
+                await loadSubmissions();
+            } else {
+                alertBox.className = 'alert alert-danger';
+                alertBox.innerText = 'Failed to update status.';
+            }
+        } catch (err) {
+            alertBox.className = 'alert alert-danger';
+            alertBox.innerText = 'Error: ' + err.message;
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerText = 'Save Changes';
+        }
+    });
+
+    window.deleteSubmission = async function(refCode) {
+        if (!confirm(`Are you sure you want to permanently delete submission ${refCode}?`)) {
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/forms/submissions/${encodeURIComponent(refCode)}`, {
+                method: 'DELETE'
+            });
+
+            if (res.ok) {
+                await loadSubmissions();
+            } else {
+                alert('Failed to delete submission.');
+            }
+        } catch (err) {
+            alert('Error deleting: ' + err.message);
+        }
+    };
+
+    document.getElementById('searchInput').addEventListener('input', renderTable);
+    document.getElementById('statusFilter').addEventListener('change', renderTable);
+    document.getElementById('refreshBtn').addEventListener('click', loadSubmissions);
+
+    loadSubmissions();
+</script>
+}

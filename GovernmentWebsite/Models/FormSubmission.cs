@@ -27,6 +27,11 @@ public class FormSubmission
 
     public DateTimeOffset SubmittedAt { get; set; } = DateTimeOffset.UtcNow;
 
+    public DateTimeOffset? UpdatedAt { get; set; }
+
+    [StringLength(500)]
+    public string? ReviewNotes { get; set; }
+
     // Store dynamic fields as JSON
     public string FieldsJson { get; set; } = "{}";
 }
