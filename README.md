@@ -20,5 +20,5 @@ For the Client Side, the website could do these four functionalities:
 While for the Adminnistrative Side:
 - there is still no functionalities here as it is currently in progress.
 
-  **Known Issue:**
+**Known Issue:**
   - Submitted data is not being saved in the database on the client side
