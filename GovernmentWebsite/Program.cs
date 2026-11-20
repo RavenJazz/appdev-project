@@ -1,9 +1,17 @@
+using GovernmentWebsite.Data;
 using GovernmentWebsite.Services;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
-builder.Services.AddScoped<IFormSubmissionService, InMemoryFormSubmissionService>();
+
+// Register Entity Framework Core with SQLite
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Use the database-backed service instead of in-memory
+builder.Services.AddScoped<IFormSubmissionService, DbFormSubmissionService>();
 
 builder.Services.AddCors(options =>
 {
